@@ -45,7 +45,7 @@ namespace BlockChainP411NEW.Models
             Type = TransactionType.ICO;
             TokenSymbol = tokenSymbol;
             TotalSupply = totalSupply;
-            Fee = 50;
+            Fee = 100;
         }
 
         public string ToHashString()

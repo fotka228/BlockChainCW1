@@ -46,8 +46,8 @@ namespace BlockChainP411NEW.Services
         public Transaction CreateICOToken(Wallet sender, string tokenSymbol, decimal totalSupply)
         {
             var baseBalance = _walletService.GetBalance(sender.Address, "BASE");
-            if (baseBalance < 50)
-                throw new ArgumentException($"ICO costs 50 BASE. You have only {baseBalance} BASE.");
+            if (baseBalance < 100)
+                throw new ArgumentException($"ICO costs 100 BASE. You have only {baseBalance} BASE.");
 
             if (_walletService.TokenExists(tokenSymbol))
                 throw new ArgumentException($"Token {tokenSymbol} already exists!");
@@ -92,8 +92,8 @@ namespace BlockChainP411NEW.Services
             if (tx.Type == TransactionType.ICO)
             {
                 var baseBalance = _walletService.GetBalance(tx.From, "BASE");
-                if (baseBalance < 50)
-                    return (false, $"ICO costs 50 BASE. Sender has only {baseBalance} BASE.");
+                if (baseBalance < 100)
+                    return (false, $"ICO costs 100 BASE. Sender has only {baseBalance} BASE.");
 
                 if (_walletService.TokenExists(tx.TokenSymbol))
                     return (false, $"Token {tx.TokenSymbol} already exists!");

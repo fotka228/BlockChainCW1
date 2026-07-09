@@ -20,7 +20,7 @@ namespace BlockChainP411NEW.Services
                 foreach (var tx in block.Transactions)
                     PrintTransaction(tx);
 
-                Console.WriteLine(new string('-', 50));
+                Console.WriteLine(new string('-', 100));
             }
         }
 
@@ -32,7 +32,7 @@ namespace BlockChainP411NEW.Services
             Console.WriteLine($"  Amount:    {tx.Amount}");
             Console.WriteLine($"  Fee:       {tx.Fee}");
             Console.WriteLine($"  TimeStamp: {tx.TimeStamp}");
-            Console.WriteLine(new string('-', 50));
+            Console.WriteLine(new string('-', 100));
         }
 
         public void PrintChainValidity(bool isValid)

@@ -54,7 +54,6 @@ namespace BlockChainP411NEW.Services
                     if (messageJson != null)
                     {
                         Console.WriteLine($"Received message from {client.Client.RemoteEndPoint}: {messageJson}");
-                        // Handle the received message (e.g., process transactions, blocks, etc.)
                         ProcessMessage(messageJson);
                     }
 
@@ -99,7 +98,7 @@ namespace BlockChainP411NEW.Services
                     }
                     else
                     {
-                        BroadcastSync(); // Request the correct chain from peers
+                        BroadcastSync();
                     }
                     break;
                 default:
