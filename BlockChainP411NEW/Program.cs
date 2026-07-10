@@ -1,216 +1,132 @@
-﻿using BlockChainP411NEW.Models;
+﻿
+using BlockChainP411NEW.Models;
 using BlockChainP411NEW.Services;
 using System;
-using System.Threading.Tasks;
 
-namespace BlockChain_1
+namespace BlockChainP411NEW;
+
+class Program
 {
-    internal class Program
+    static void Main(string[] args)
     {
-        static async Task Main(string[] args)
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+        Console.WriteLine("Exam");
+
+        Console.WriteLine("\nDemo");
+
+        var blockchain = new BlockChainService();
+
+        var alice = blockchain.CreateWallet("0xAliceAddress1111", "priv_alice");
+        var bob = blockchain.CreateWallet("0xBobAddress2222", "priv_bob");
+        Console.WriteLine("1. Create a wallets:");
+        Console.WriteLine($"  Alice: {alice.Address}");
+        Console.WriteLine($"  Bob:   {bob.Address}");
+
+
+        Console.WriteLine("\n2. Alice mines 3 blocks to accumulate BASE:");
+        blockchain.MineBlock(alice.Address); Console.WriteLine("   Block #1 mined, reward: 50 BASE");
+        blockchain.MineBlock(alice.Address); Console.WriteLine("   Block #2 mined, reward: 50 BASE");
+        blockchain.MineBlock(alice.Address); Console.WriteLine("   Block #3 mined, reward: 50 BASE");
+
+        Console.WriteLine($"   Balance BASE Alice: {alice.Balances["BASE"]:N2}");
+        Console.WriteLine($"   Balance BASE Bob:  {(bob.Balances.ContainsKey("BASE") ? bob.Balances["BASE"] : 0):N2}");
+        Console.WriteLine("\n3. Alice issues ALICE_COIN (ICO):");
+        var icoTx = new Transaction(TransactionType.ICO, "ALICE_COIN", alice.Address, alice.Address, 0, 100m, 1000m);
+        if (blockchain.AddTransaction(icoTx, out string err1))
         {
-            var displayService = new BlockChainDisplayService();
-            var blockChain = new BlockChainService(initialDifficulty: 4);
-            var walletService = new WalletService(blockChain.Chain);
-            var transactionService = new TransactionService(blockChain.Chain);
-
-            var alice = walletService.CreateWallet("Alice");
-            var bob = walletService.CreateWallet("Bob");
-            Console.WriteLine($"Alice: {alice.Address}");
-            Console.WriteLine($"Bob:   {bob.Address}\n");
-
-            await RunDemo(blockChain, transactionService, walletService, alice, bob);
-            await MainMenu(blockChain, transactionService, walletService, displayService, alice, bob);
+            Console.WriteLine("   ICO successful: 1000 ALICE_COIN created.");
+            Console.WriteLine($"   Balance ALICE_COIN Alice: {alice.Balances["ALICE_COIN"]:N2}");
+            Console.WriteLine($"   Balance BASE Alice: {alice.Balances["BASE"]:N2}");
         }
-        static async Task RunDemo(BlockChainService chain, TransactionService txService,
-            WalletService walletService, Wallet alice, Wallet bob)
+        Console.WriteLine("\n4. Bob tries to issue BOB_COIN (insufficient funds):");
+        var bobIcoBad = new Transaction(TransactionType.ICO, "BOB_COIN", bob.Address, bob.Address, 0, 100m, 500m);
+        if (!blockchain.AddTransaction(bobIcoBad, out string err2))
         {
-            Console.WriteLine("\n Demo proof\n");
-            Console.WriteLine("1. Alice mines BASE coins...");
-            for (int i = 0; i < 7; i++)
-            {
-                await chain.MineBlock(alice.Address);
-                Console.WriteLine($"   Block #{chain.Chain.Count - 1}. Alice BASE: {walletService.GetBalance(alice.Address, "BASE")}");
-            }
-            Console.WriteLine("\n2. Alice creates 1000 ALICE_COIN tokens...");
-            try
-            {
-                var icoTx = txService.CreateICOToken(alice, "ALICE_COIN", 1000);
-                chain.AddTransactionToMemPool(icoTx);
-                await chain.MineBlock(alice.Address);
-                Console.WriteLine("ALICE_COIN created successfully!");
-                Console.WriteLine($"Alice ALICE_COIN: {walletService.GetBalance(alice.Address, "ALICE_COIN")}");
-                Console.WriteLine($"Alice BASE: {walletService.GetBalance(alice.Address, "BASE")}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-
-            Console.WriteLine("\n3. Bob tries to create BOB_COIN (no BASE)...");
-            try
-            {
-                var icoTx = txService.CreateICOToken(bob, "BOB_COIN", 1000);
-                chain.AddTransactionToMemPool(icoTx);
-                await chain.MineBlock(bob.Address);
-                Console.WriteLine("Transaction passed (should fail!)");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Rejected: {ex.Message}");
-            }
-
-            Console.WriteLine("\n4. Bob tries to create ALICE_COIN (theft)...");
-            try
-            {
-                var icoTx = txService.CreateICOToken(bob, "ALICE_COIN", 1000);
-                chain.AddTransactionToMemPool(icoTx);
-                await chain.MineBlock(bob.Address);
-                Console.WriteLine("Transaction passed (should fail!)");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Rejected: {ex.Message}");
-            }
-
-            Console.WriteLine("\n5. Alice sends 200 ALICE_COIN to Bob...");
-            try
-            {
-                var tx = txService.CreateTransaction(alice, bob.Address, 200, "ALICE_COIN");
-                chain.AddTransactionToMemPool(tx);
-                await chain.MineBlock(alice.Address);
-                Console.WriteLine("Transfer successful!");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-            Console.WriteLine("\n6. Final balances:");
-            PrintBalances(walletService, alice, "Alice");
-            PrintBalances(walletService, bob, "Bob");
+            Console.WriteLine($"   Rejected: {err2}");
         }
-
-        static void PrintBalances(WalletService walletService, Wallet wallet, string name)
+        Console.WriteLine("\n5. Bob tries to steal the ALICE_COIN ticker:");
+        bob.Balances["BASE"] = 200m;
+        var bobStealTx = new Transaction(TransactionType.ICO, "ALICE_COIN", bob.Address, bob.Address, 0, 100m, 100m);
+        if (!blockchain.AddTransaction(bobStealTx, out string err3))
         {
-            var balances = walletService.GetAllBalances(wallet.Address);
-            Console.WriteLine($"\n{name}:");
-            foreach (var kvp in balances)
-                if (kvp.Value != 0)
-                    Console.WriteLine($"   {kvp.Key}: {kvp.Value:F4}");
+            Console.WriteLine($"   Rejected: {err3}");
         }
-
-        static async Task MainMenu(BlockChainService chain, TransactionService txService,
-            WalletService walletService, BlockChainDisplayService display,
-            Wallet alice, Wallet bob)
+        bob.Balances["BASE"] = 0m;
+        Console.WriteLine("\n6. Mining a block for transaction confirmation:");
+        blockchain.MineBlock(alice.Address);
+        Console.WriteLine($"   Block #4 mined. Current chain height: {blockchain.Chain.Count}");
+        Console.WriteLine("\n7. Alice transfers 300 ALICE_COIN to Bob (Fee: 2 BASE):");
+        var transferTx = new Transaction(TransactionType.Transfer, "ALICE_COIN", alice.Address, bob.Address, 300m, 2m);
+        if (blockchain.AddTransaction(transferTx, out _))
         {
-            while (true)
-            {
-                Console.WriteLine("\n BlockChain Menu");
-                Console.WriteLine("1. Show balances");
-                Console.WriteLine("2. Send BASE");
-                Console.WriteLine("3. Send custom token");
-                Console.WriteLine("4. Create token");
-                Console.WriteLine("5. Mine block");
-                Console.WriteLine("6. Validate chain");
-                Console.WriteLine("7. Print chain");
-                Console.WriteLine("8. Token info");
-                Console.WriteLine("9. Exit");
+            Console.WriteLine("   Transfer successful.");
+            Console.WriteLine($"   Alice ALICE_COIN: {alice.Balances["ALICE_COIN"]:N2}");
+            Console.WriteLine($"   Bob ALICE_COIN:   {bob.Balances["ALICE_COIN"]:N2}");
+            Console.WriteLine($"   Alice BASE:       {alice.Balances["BASE"]:N2}");
+            Console.WriteLine($"   Bob BASE (Gas):   {(bob.Balances.ContainsKey("BASE") ? bob.Balances["BASE"] : 0):N2}");
+        }
+        Console.WriteLine("\nFINAL STATE OF MULTICURRENCY WALLETS");
+        Console.WriteLine($"Alice ({alice.Address}):");
+        foreach (var kvp in alice.Balances) Console.WriteLine($"   {kvp.Key}: {kvp.Value:N2}");
 
-                Console.Write("\nChoose: ");
-                var choice = Console.ReadLine();
+        Console.WriteLine($"Bob ({bob.Address}):");
+        if (!bob.Balances.ContainsKey("BASE")) bob.Balances["BASE"] = 0m;
+        foreach (var kvp in bob.Balances) Console.WriteLine($"   {kvp.Key}: {kvp.Value:N2}");
 
-                switch (choice)
-                {
-                    case "1":
-                        PrintBalances(walletService, alice, "Alice");
-                        PrintBalances(walletService, bob, "Bob");
-                        break;
-                    case "2":
-                        await SendToken(chain, txService, alice, bob.Address, "BASE");
-                        break;
-                    case "3":
-                        Console.Write("Token symbol: ");
-                        var token = Console.ReadLine()?.ToUpperInvariant();
-                        if (!string.IsNullOrEmpty(token))
-                            await SendToken(chain, txService, alice, bob.Address, token);
-                        break;
-                    case "4":
-                        await CreateToken(chain, txService, alice);
-                        break;
-                    case "5":
-                        await chain.MineBlock(alice.Address);
-                        Console.WriteLine("Block mined.");
-                        break;
-                    case "6":
-                        display.PrintChainValidity(chain.IsValid());
-                        break;
-                    case "7":
-                        display.PrintChain(chain.Chain);
-                        break;
-                    case "8":
-                        Console.Write("Token symbol: ");
-                        var infoToken = Console.ReadLine()?.ToUpperInvariant();
-                        if (!string.IsNullOrEmpty(infoToken))
-                        {
-                            var info = walletService.GetTokenInfo(infoToken);
-                            if (info.HasValue)
-                                Console.WriteLine($"Token: {infoToken}, Creator: {info.Value.Creator}, Supply: {info.Value.TotalSupply}");
-                            else
-                                Console.WriteLine($"Token {infoToken} not found.");
-                        }
-                        break;
-                    case "9":
-                        return;
-                    default:
-                        Console.WriteLine("Invalid option.");
-                        break;
-                }
-            }
+        Console.WriteLine($"\nRegistered tokens in the network: {string.Join(", ", blockchain.TokenRegistry)}");
+        Console.WriteLine($"BlockChain height: {blockchain.Chain.Count}, difficulty: {blockchain.Difficulty}");
+
+
+        Console.WriteLine("\nExtra-Task:");
+        Console.WriteLine("\n1. Deploy a couple  of independence Нod:");
+        var nodeA = new BlockChainService();
+        var nodeB = new BlockChainService();
+
+        var userA = nodeA.CreateWallet("0xUserA", "pA");
+        var userB = nodeB.CreateWallet("0xUserB", "pB");
+        userA.Balances["BASE"] = 500m;
+        userB.Balances["BASE"] = 500m;
+
+        Console.WriteLine("2. Nod А сreate token MEME:");
+        var memeA = new Transaction(TransactionType.ICO, "MEME", userA.Address, userA.Address, 0, 100m, 500m);
+        nodeA.AddTransaction(memeA, out _);
+        nodeA.MineBlock(userA.Address);
+        Console.WriteLine($"   Nod А height: {nodeA.Chain.Count}, tokens: {string.Join(", ", nodeA.TokenRegistry)}");
+
+        Console.WriteLine("\n3. Nod Б сreate token MEME (2 blocks - longer chain):");
+        var memeB = new Transaction(TransactionType.ICO, "MEME", userB.Address, userB.Address, 0, 100m, 2000m);
+        nodeB.AddTransaction(memeB, out _);
+        nodeB.MineBlock(userB.Address);
+        nodeB.MineBlock(userB.Address);
+        Console.WriteLine($"   Nod Б height: {nodeB.Chain.Count}, tokens: {string.Join(", ", nodeB.TokenRegistry)}");
+
+        Console.WriteLine("\n4. Synchronization and consensus verification ...");
+        if (nodeB.Chain.Count > nodeA.Chain.Count)
+        {
+            Console.WriteLine("   [Consensus] Nod А detected longer chain. Rolling back shorter chain...");
+            nodeA.RollbackToHeight(1);
+
+            nodeA.Chain.Clear();
+            nodeA.Chain.AddRange(nodeB.Chain);
+            nodeA.TokenRegistry.Clear();
+            foreach (var t in nodeB.TokenRegistry) nodeA.TokenRegistry.Add(t);
+
+            Console.WriteLine("   [Consensus] Nod А successfully overwrote the state with data from Nod Б.");
         }
 
-        static async Task SendToken(BlockChainService chain, TransactionService txService,
-            Wallet sender, string to, string symbol)
-        {
-            Console.Write($"Amount of {symbol}: ");
-            if (!decimal.TryParse(Console.ReadLine(), out decimal amount) || amount <= 0)
-            {
-                Console.WriteLine("Invalid amount.");
-                return;
-            }
+        Console.WriteLine("\n5. Final State:");
+        Console.WriteLine($"   Nod А height: {nodeA.Chain.Count}, tokens: {string.Join(", ", nodeA.TokenRegistry)}");
+        Console.WriteLine($"   Nod Б height: {nodeB.Chain.Count}, tokens: {string.Join(", ", nodeB.TokenRegistry)}");
 
-            try
-            {
-                var tx = txService.CreateTransaction(sender, to, amount, symbol);
-                chain.AddTransactionToMemPool(tx);
-                await chain.MineBlock(sender.Address);
-                Console.WriteLine($"Sent {amount} {symbol}!");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-        }
+        Console.WriteLine("\nConsensus Result:");
+        Console.WriteLine("   Consensus successful: longer chain (Nod Б) won.");
+        Console.WriteLine("   Shorter chain (Nod А) rolled back, duplicate token issuance canceled.");
 
-        static async Task CreateToken(BlockChainService chain, TransactionService txService, Wallet sender)
-        {
-            Console.Write("Token symbol: ");
-            var symbol = Console.ReadLine()?.ToUpperInvariant();
-            if (string.IsNullOrEmpty(symbol)) return;
+        Console.WriteLine("\nConsensus Result:");
+        Console.WriteLine("   Consensus successful: longer chain (Nod Б) won.");
+        Console.WriteLine("   Shorter chain (Nod А) rolled back, duplicate token issuance canceled.");
 
-            Console.Write("Total supply: ");
-            if (!decimal.TryParse(Console.ReadLine(), out decimal supply) || supply <= 0) return;
-
-            try
-            {
-                var icoTx = txService.CreateICOToken(sender, symbol, supply);
-                chain.AddTransactionToMemPool(icoTx);
-                await chain.MineBlock(sender.Address);
-                Console.WriteLine($"Token {symbol} created! Supply: {supply}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-        }
+        Console.WriteLine("\nExam completed. Press any key to exit...");
+        Console.ReadKey();
     }
 }

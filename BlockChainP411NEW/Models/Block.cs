@@ -1,27 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace BlockChainP411NEW.Models;
 
-namespace BlockChainP411NEW.Models
+public class Block
 {
-    public class Block
-    {
-        public int Index { get; set; }
-        public DateTime TimeStamp { get; set; }
-        public List<Transaction> Transactions { get; set; }
-        public string PreviousHash { get; set; }
-        public int Nonce { get; set; }
-        public double MiningDuration { get; set; }
-        public string Hash { get; set; }
-        public int Difficulty { get; set; } = 3;
+    public int Index { get; set; }
+    public long Timestamp { get; set; }
+    public List<Transaction> Transactions { get; set; } = new();
+    public string PreviousHash { get; set; } = string.Empty;
+    public string Hash { get; set; } = string.Empty;
+    public int Nonce { get; set; }
+    public string MerkleRoot { get; set; } = string.Empty;
+    public string MinerAddress { get; set; } = string.Empty;
 
-        public Block(int index, DateTime timeStamp, List<Transaction> transactions, string previousHash)
-        {
-            Index = index;
-            TimeStamp = timeStamp;
-            Transactions = transactions;
-            PreviousHash = previousHash;
-            Hash = string.Empty;
-            MiningDuration = 0;
-        }
+    public Block() { }
+
+    public Block(int index, List<Transaction> transactions, string previousHash, string minerAddress)
+    {
+        Index = index;
+        Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        Transactions = transactions;
+        PreviousHash = previousHash;
+        MinerAddress = minerAddress;
     }
 }

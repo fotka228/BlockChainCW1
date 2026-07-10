@@ -1,27 +1,18 @@
-﻿using System.Security.Cryptography;
+﻿namespace BlockChainP411NEW.Models;
 
-namespace BlockChainP411NEW.Models
+public class Wallet
 {
-    public class Wallet
+    public string Address { get; set; } = string.Empty;
+    public string PrivateKey { get; set; } = string.Empty;
+
+    public Dictionary<string, decimal> Balances { get; set; } = new();
+
+    public Wallet() { }
+
+    public Wallet(string address, string privateKey)
     {
-        public string Name { get; set; }
-        public string Address { get; set; }
-        public byte[] PublicKey { get; set; }
-        private byte[] PrivateKey { get; set; }
-
-        public Wallet(string name, string address, byte[] publicKey, byte[] privateKey)
-        {
-            Name = name;
-            Address = address;
-            PublicKey = publicKey;
-            PrivateKey = privateKey;
-        }
-
-        public byte[] Sign(byte[] data)
-        {
-            using var ecdsa = ECDsa.Create();
-            ecdsa.ImportECPrivateKey(PrivateKey, out _);
-            return ecdsa.SignData(data, HashAlgorithmName.SHA256);
-        }
+        Address = address;
+        PrivateKey = privateKey;
+        Balances["BASE"] = 0m;
     }
 }
